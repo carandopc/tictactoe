@@ -2,52 +2,48 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
+function calculateHorizontalLines(lines, boardSize) {
+	for (let i = 0; i < boardSize; i++) {
+		let line = [];
+
+		for (let j = 0; j < boardSize; j++) {
+			line.push((boardSize * i) + j);
+		}
+
+		lines.push(line);
+	}
+}
+
+function calculateVerticalLines(lines, boardSize) {
+	for (let i = 0; i < boardSize; i++) {
+		let line = [];
+
+		for (let j = 0; j < boardSize; j++) {
+			line.push((boardSize * j) + i);
+		}
+
+		lines.push(line);
+	}
+}
+
+function calculateDiagonalLines(lines, boardSize) {
+	for (let i = 0; i < 2; i++) {
+		let line = [];
+		
+		for (let j = 0; j < boardSize; j++) {
+			line.push((+boardSize + (1 - (2 * i))) * (i + j));
+		}
+
+		lines.push(line);
+	}
+}
+
 function calculateWinner(squares, boardSize) {
 	let lines = [];
 
-	for (let i = 0; i < boardSize; i++) {
-		let line = [];
-
-		for (let j = 0; j < boardSize; j++) {
-			let id = (boardSize * i) + j;
-			line.push(id);
-		}
-
-		lines.push(line);
-	}
-
-	for (let i = 0; i < boardSize; i++) {
-		let line = [];
-
-		for (let j = 0; j < boardSize; j++) {
-			let id = (boardSize * j) + i;
-			line.push(id);
-		}
-
-		lines.push(line);
-	}
-
-	let inclineLeft = [];
-
-	for (let i = 0; i < boardSize; i++) {
-		let id = (+boardSize + 1) * i;
-		inclineLeft.push(id);
-	}
-
-	lines.push(inclineLeft);
-
-	let inclineRight = [];
-
-	for (let i = 0; i < boardSize; i++) {
-		let id = (boardSize - 1) * (i + 1);
-		inclineRight.push(id);
-	}
-
-	lines.push(inclineRight);
-
-	console.log(lines);
-
-	console.log(squares);
+	calculateHorizontalLines(lines, boardSize);
+	calculateVerticalLines(lines, boardSize);
+	calculateDiagonalLines(lines, boardSize);
 
 	for (let i = 0; i < lines.length; i++) {
 		let hasWon = true;
@@ -136,6 +132,24 @@ class Board extends React.Component {
 	}
 }
 
+function Status(props) {
+	let status;
+
+	if (!props.winner && props.stepNumber >= (props.boardSize * props.boardSize)) {
+		status = 'Draw'
+	} else if (props.winner) {
+		status = 'Winner: ' + props.winner.player;
+	} else {
+		status = 'Next player: ' + (props.xIsNext ? 'X' : 'O');
+	}
+
+	return (
+		<div className="status">
+			{status}
+		</div>
+	)
+}
+
 class Game extends React.Component {
 	constructor(props) {
 		super(props);
@@ -160,11 +174,9 @@ class Game extends React.Component {
 	handleClick(i) {
 		const history = this.state.history.slice(0, this.state.stepNumber + 1);
 		const location = this.state.location.slice(0, this.state.stepNumber + 1);
-		const current = history[history.length - 1];
-		const squares = current.squares.slice();
-		const boardSize = this.state.boardSize;
+		const squares = history[history.length - 1].squares.slice();
 
-		if (calculateWinner(squares, boardSize) || squares[i]) {
+		if (calculateWinner(squares, this.state.boardSize) || squares[i]) {
 			return;
 		}
 
@@ -217,48 +229,46 @@ class Game extends React.Component {
 	
 	changeBoardSize(e) {
 		e.preventDefault();
-		let newBoardSize = this.state.newBoardSize;
-
-		this.resetGame();
 
 		this.setState({
-			boardSize: newBoardSize,
+			history: [{
+				squares: Array(9).fill(null),
+			}],
+			location: [{
+				col: null,
+				row: null,
+			}],
+			stepNumber: 0,
+			xIsNext: true,
+			clicked: null,
+			reversed: false,
+			boardSize: this.state.newBoardSize,
 		});
 	}
 
 	setBoardSize(e) {
-		let value = e.target.value;
-		let validity = false;
-		let size = this.state.boardSize;
+		const value = e.target.value;
 		const regex = /^\d+$/;
-
-		if (value.match(regex)) {
-			validity = true;
-			size = value;
-		}
+		const valid = value.match(regex);
 
 		this.setState({
-			boardSizeValid: validity,
-			newBoardSize: size,
+			boardSizeValid: valid,
+			newBoardSize: valid ? value : this.state.boardSize,
 		});
 	}
 
 	render() {
-		const history = this.state.history;
-		const location = this.state.location;
-		const reversed = this.state.reversed;
-		const clicked = this.state.clicked;
-		const current = history[this.state.stepNumber];
-		const boardSize = this.state.boardSize;
-		const winner = calculateWinner(current.squares, boardSize);
+		const squares = this.state.history[this.state.stepNumber].squares;
+		const winner = calculateWinner(squares, this.state.boardSize);
+		const sortButton = this.state.reversed ? 
+			'Sort ascending' : 
+			'Sort descending';
 
-		const moves = history.map((step, move) => {
-			if (reversed) {
-				move = history.length - 1 - move;
-			}
-
-			const coords = '(' + location[move].col + ',' + location[move].row + ')';
-			const desc = move ? 'Go to move #' + move + ' ' + coords : 'Go to game start';
+		const moves = this.state.history.map((step, m) => {
+			const move = this.state.reversed ? this.state.history.length - 1 - m : m;
+			const desc = move ? 
+				'Go to move #' + move + ' (' + this.state.location[move].col + ',' + this.state.location[move].row + ')' : 
+				'Go to game start';
 
 			return (
 				<li key={move}>
@@ -269,46 +279,34 @@ class Game extends React.Component {
 			);
 		});
 
-		let status;
-
-		if (!winner && this.state.stepNumber >= (boardSize * boardSize)) {
-			status = 'Draw'
-		} else if (winner) {
-			status = 'Winner: ' + winner.player;
-		} else {
-			status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-		}
-
-		let order;
-
-		if (reversed) {
-			order = 'Sort ascending';
-		} else {
-			order = 'Sort descending';
-		}
-
 		return (
 			<div className="game">
 				<div className="game-board">
 					<Board 
-						squares={current.squares}
+						squares={squares}
 						onClick={(i) => this.handleClick(i)}
 						winner={winner}
-						clicked={clicked}
-						boardSize={boardSize}
-					/>
+						clicked={this.state.clicked}
+						boardSize={this.state.boardSize}/>
 				</div>
 				<div className="game-info">
-					<div className="status">
-						{status}
-					</div>
+					<Status 
+						winner={winner} 
+						stepNumber={this.state.stepNumber} 
+						boardSize={this.state.boardSize} 
+						xIsNext={this.state.xIsNext}/>
 					<div className="buttons">
-						<input type="tel" placeholder={this.state.boardSize} onChange={(e) => this.setBoardSize(e)}/>
-						<button onClick={(e) => this.changeBoardSize(e)} disabled={!this.state.boardSizeValid}>
+						<input 
+							type="tel" 
+							placeholder={this.state.boardSize} 
+							onChange={(e) => this.setBoardSize(e)}/>
+						<button 
+							onClick={(e) => this.changeBoardSize(e)} 
+							disabled={!this.state.boardSizeValid}>
 							Change board size
 						</button>
 						<button onClick={() => this.reverseOrder()}>
-							{order}
+							{sortButton}
 						</button>
 						<button onClick={() => this.resetGame()}>
 							Reset game
