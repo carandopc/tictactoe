@@ -1,14 +1,103 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono');
+
+* {
+	font-family: "Roboto Mono", monospace;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+body {
+	height: 100vh;
+	width: 100%;
+	margin: 0;
+}
+
+#root {
+	height: 100%;
+}
+
+.game {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100%;
+}
+
+.game-board {
+	padding: 6vmin;
+}
+
+.board-row:after {
+	clear: both;
+	content: "";
+	display: table;
+}
+
+.square {
+	background: white;
+	border: 1px solid black;
+	float: left;
+	font-size: 6vmin;
+	font-weight: bold;
+	line-height: 10vmin;
+	height: 10vmin;
+	width: 10vmin;
+	margin-right: 0;
+	margin-top: 0;
+	padding: 0;
+	text-align: center;
+}
+
+.square:focus {
+	outline: none;
+}
+
+.game-info {
+	margin-left: 0;
+}
+
+.game-info input {
+	padding: 1vmin;
+	margin-bottom: 1vmin;
+	text-align: center;
+	border: 1px solid black;
+}
+
+.game-info button {
+	width: 100%;
+	margin-bottom: 1vmin;
+	border: 1px solid black;
+	background: 0;
+	cursor: pointer;
+	padding: 1vmin;
+	background-color: black;
+	color: white;
+}
+
+.game-info button:enabled:hover {
+	color: white;
+	background-color: crimson;
+	border-color: crimson;
+}
+
+.game-info button:disabled {
+	color: grey;
+	background-color: lightgrey;
+	border-color: lightgrey;
+}
+
+.status {
+	margin: 2vmin;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.buttons {
+	display: flex;
+	flex-direction: column;
+}
+
+ol, ul {
+	padding-left: 0;
+	list-style: none;
+	overflow-y: auto;
+	height: 30vh;
 }
